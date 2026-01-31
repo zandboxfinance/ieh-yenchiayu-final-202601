@@ -1,7 +1,7 @@
 // ======================
 // 🔑 前端 Gemini API Key
 // ======================
-const API_KEY = 'AIzaSyBI1i1CYKUAxgYet1vmcP-gl4B27yqDYFM';
+const API_KEY = 'AIzaSyAsq5fDEYoUzHk6lQy2zkC1QLO0Oh9Nr44';
 
 
 // ====== DOM ======
