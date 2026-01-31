@@ -1,288 +1,135 @@
-// ======================
-// 🔑 前端 Gemini API Key
-// ======================
-const API_KEY = 'AIzaSyAsq5fDEYoUzHk6lQy2zkC1QLO0Oh9Nr44';
-
-
-// ====== DOM ======
+const SIZE = 15, CELL = 35, OFFSET = 20;
 const canvas = document.getElementById('chess');
 const ctx = canvas.getContext('2d');
 const statusText = document.getElementById('status');
-const restartBtn = document.getElementById('restartBtn');
-
-
-const chatBox = document.getElementById('chatBox');
-const userInput = document.getElementById('userInput');
-const sendBtn = document.getElementById('sendBtn');
-
-
-// ====== 棋盤設定 ======
-const SIZE = 15;
-const CELL = 30;
-const OFFSET = 15;
-const CANVAS_SIZE = OFFSET * 2 + CELL * (SIZE - 1);
-
-
-canvas.width = CANVAS_SIZE;
-canvas.height = CANVAS_SIZE;
 
 
 let board = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
-let isUserTurn = true;
 let isGameOver = false;
+canvas.width = canvas.height = (SIZE - 1) * CELL + OFFSET * 2;
 
 
-// ====== 畫格子 ======
 function drawGrid() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = '#8b4513';
-  for (let i = 0; i < SIZE; i++) {
-    ctx.beginPath();
-    ctx.moveTo(OFFSET + i * CELL, OFFSET);
-    ctx.lineTo(OFFSET + i * CELL, CANVAS_SIZE - OFFSET);
-    ctx.stroke();
-
-
-    ctx.beginPath();
-    ctx.moveTo(OFFSET, OFFSET + i * CELL);
-    ctx.lineTo(CANVAS_SIZE - OFFSET, OFFSET + i * CELL);
-    ctx.stroke();
-  }
-}
-
-
-// ====== 下棋 ======
-function placeStone(i, j, black) {
-  ctx.beginPath();
-  ctx.arc(OFFSET + i * CELL, OFFSET + j * CELL, 13, 0, Math.PI * 2);
-  ctx.fillStyle = black ? '#000' : '#fff';
-  ctx.fill();
-  ctx.stroke();
-}
-
-
-// ====== 勝負判斷 ======
-function checkWin(i, j, c) {
-  const dirs = [
-    [1, 0],
-    [0, 1],
-    [1, 1],
-    [1, -1],
-  ];
-  for (const [dx, dy] of dirs) {
-    let n = 1;
-    for (let s = 1; s < 5; s++)
-      if (board[i + dx * s]?.[j + dy * s] === c) n++;
-      else break;
-    for (let s = 1; s < 5; s++)
-      if (board[i - dx * s]?.[j - dy * s] === c) n++;
-      else break;
-    if (n >= 5) return true;
-  }
-  return false;
-}
-
-
-// ====== 初始化遊戲 ======
-function initGame() {
-  board = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
-  isUserTurn = true;
-  isGameOver = false;
-  drawGrid();
-  statusText.innerText = '你的回合（黑子）';
-}
-restartBtn.onclick = initGame;
-
-
-// ====== 計算連線數 ======
-function countLine(i, j, dx, dy, color) {
-  let count = 0;
-  for (let s = 1; s < 5; s++) {
-    if (board[i + dx * s]?.[j + dy * s] === color) count++;
-    else break;
-  }
-  for (let s = 1; s < 5; s++) {
-    if (board[i - dx * s]?.[j - dy * s] === color) count++;
-    else break;
-  }
-  return count;
-}
-
-
-// ====== AI 下棋策略（防守連3/進攻連3+中文提示）=====
-function aiMove() {
-  if (isGameOver) return;
-
-
-  let bestScore = -Infinity;
-  let bestMove = null;
-  let message = '我在思考下一步…';
-
-
-  for (let i = 0; i < SIZE; i++) {
-    for (let j = 0; j < SIZE; j++) {
-      if (board[i][j] !== 0) continue;
-      let score = 0;
-
-
-      // AI 自己
-      board[i][j] = 2;
-      for (const [dx, dy] of [
-        [1, 0],
-        [0, 1],
-        [1, 1],
-        [1, -1],
-      ]) {
-        const c = countLine(i, j, dx, dy, 2);
-        if (c >= 4) {
-          score += 1000;
-          message = '我在這裡完成連五！';
-        } else if (c === 3) score += 50;
-      }
-
-
-      // 玩家
-      for (const [dx, dy] of [
-        [1, 0],
-        [0, 1],
-        [1, 1],
-        [1, -1],
-      ]) {
-        const c = countLine(i, j, dx, dy, 1);
-        if (c >= 4) {
-          score += 900;
-          message = '小心，你快連五了，我要阻止！';
-        } else if (c === 3) {
-          score += 100;
-          message = '小心，你有三顆連在一起，我要堵住！';
-        }
-      }
-
-
-      board[i][j] = 0;
-
-
-      if (score > bestScore) {
-        bestScore = score;
-        bestMove = { i, j };
-      }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = "#5d3a1a";
+    for (let i = 0; i < SIZE; i++) {
+        ctx.beginPath(); ctx.moveTo(OFFSET + i * CELL, OFFSET); ctx.lineTo(OFFSET + i * CELL, canvas.height - OFFSET); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(OFFSET, OFFSET + i * CELL); ctx.lineTo(canvas.width - OFFSET, OFFSET + i * CELL); ctx.stroke();
     }
-  }
+}
 
 
-  if (!bestMove) {
-    let center = Math.floor(SIZE / 2);
-    bestMove = { i: center, j: center };
-    if (board[center][center] !== 0) {
-      outer: for (let r = 0; r < SIZE; r++) {
-        for (let x = center - r; x <= center + r; x++) {
-          for (let y = center - r; y <= center + r; y++) {
-            if (x >= 0 && x < SIZE && y >= 0 && y < SIZE && board[x][y] === 0) {
-              bestMove = { i: x, j: y };
-              break outer;
+// 🤖 AI 核心：這就是「萬用破解」，直接把 AI 邏輯寫進去
+function getScore(x, y, p) {
+    let score = 0;
+    const dirs = [[1,0], [0,1], [1,1], [1,-1]];
+    for (let [dx, dy] of dirs) {
+        let count = 0, space = 0;
+        for (let s of [-1, 1]) {
+            for (let i = 1; i < 5; i++) {
+                let nx = x + dx * i * s, ny = y + dy * i * s;
+                if (nx>=0 && nx<SIZE && ny>=0 && ny<SIZE) {
+                    if (board[nx][ny] === p) count++;
+                    else { if(board[nx][ny] === 0) space++; break; }
+                } else break;
             }
-          }
         }
-      }
+        if (count >= 4) score += 10000;
+        else if (count === 3 && space === 2) score += 1000;
+        else if (count === 3 && space === 1) score += 500;
+        else if (count === 2 && space === 2) score += 100;
     }
-    message = '我在中心附近下棋，穩住局面！';
-  }
-
-
-  placeStone(bestMove.i, bestMove.j, false);
-  board[bestMove.i][bestMove.j] = 2;
-
-
-  if (checkWin(bestMove.i, bestMove.j, 2)) {
-    statusText.innerText = 'AI 贏了 😢';
-    addMessage('AI：' + message, 'ai');
-    isGameOver = true;
-    return;
-  }
-
-
-  addMessage('AI：' + message, 'ai');
-  isUserTurn = true;
-  statusText.innerText = '你的回合（黑子）';
+    return score;
 }
 
 
-// ====== 玩家下棋 ======
+// 👁️ 視覺化：畫出 AI 的「思考熱點」
+function drawHeatmap() {
+    drawGrid();
+    for (let i = 0; i < SIZE; i++) {
+        for (let j = 0; j < SIZE; j++) {
+            if (board[i][j] === 0) {
+                let pScore = getScore(i, j, 1);
+                let aScore = getScore(i, j, 2);
+                let total = pScore + aScore;
+                if (total > 0) {
+                    ctx.fillStyle = `rgba(255, 0, 0, ${Math.min(total/1000, 0.5)})`;
+                    ctx.fillRect(OFFSET + i * CELL - 15, OFFSET + j * CELL - 15, 30, 30);
+                }
+            } else {
+                drawStone(i, j, board[i][j]);
+            }
+        }
+    }
+}
+
+
+function drawStone(i, j, p) {
+    ctx.beginPath();
+    ctx.arc(OFFSET + i * CELL, OFFSET + j * CELL, 14, 0, Math.PI * 2);
+    ctx.fillStyle = p === 1 ? "#000" : "#fff";
+    ctx.fill();
+    ctx.strokeStyle = "#444";
+    ctx.stroke();
+}
+
+
 canvas.onclick = (e) => {
-  if (!isUserTurn || isGameOver) return;
-  const x = e.offsetX - OFFSET;
-  const y = e.offsetY - OFFSET;
-  const i = Math.round(x / CELL);
-  const j = Math.round(y / CELL);
-  if (i < 0 || i >= SIZE || j < 0 || j >= SIZE || board[i][j] !== 0) return;
+    if (isGameOver) return;
+    const rect = canvas.getBoundingClientRect();
+    const i = Math.round((e.clientX - rect.left - OFFSET) / CELL);
+    const j = Math.round((e.clientY - rect.top - OFFSET) / CELL);
+    if (board[i]?.[j] !== 0) return;
 
 
-  placeStone(i, j, true);
-  board[i][j] = 1;
-
-
-  if (checkWin(i, j, 1)) {
-    statusText.innerText = '你獲勝 🎉';
-    addMessage('AI：你贏了！太棒了 🎊', 'ai');
-    isGameOver = true;
-    return;
-  }
-
-
-  isUserTurn = false;
-  statusText.innerText = 'AI 思考中...';
-  setTimeout(aiMove, 300);
+    board[i][j] = 1;
+    if (checkWin(i, j, 1)) { statusText.innerText = "玩家勝出"; isGameOver = true; }
+    else {
+        aiTurn();
+    }
+    drawHeatmap();
 };
 
 
-// ====== 聊天室功能（中文回覆）=====
-function addMessage(text, role) {
-  const div = document.createElement('div');
-  div.className = 'message ' + role;
-  div.innerText = text;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
+function aiTurn() {
+    let maxScore = -1, move = null;
+    let nodeCount = 0;
+    for (let i = 0; i < SIZE; i++) {
+        for (let j = 0; j < SIZE; j++) {
+            if (board[i][j] === 0) {
+                nodeCount++;
+                let s = Math.max(getScore(i, j, 1) * 2.2, getScore(i, j, 2)); // 防禦倍率
+                if (s > maxScore) { maxScore = s; move = {i, j}; }
+            }
+        }
+    }
+    if (move) {
+        board[move.i][move.j] = 2;
+        document.getElementById('bestScore').innerText = maxScore;
+        document.getElementById('nodes').innerText = nodeCount;
+        if (checkWin(move.i, move.j, 2)) { statusText.innerText = "AI 勝利"; isGameOver = true; }
+    }
 }
 
 
-async function sendMessage() {
-  const text = userInput.value.trim();
-  if (!text) return;
-  addMessage(text, 'user');
-  userInput.value = '';
-
-
-  try {
-    const res = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=' +
-        API_KEY,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: '請用繁體中文回答：' + text }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 60 },
-        }),
-      },
-    );
-    const data = await res.json();
-    const reply =
-      data.candidates?.[0].content?.parts[0].text || 'AI 暫時無回應';
-    addMessage(reply, 'ai');
-  } catch (err) {
-    addMessage('⚠️ AI 無法回應', 'error');
-  }
+function checkWin(i, j, p) {
+    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+    for(let [dx,dy] of dirs){
+        let c=1;
+        for(let s=1;s<5;s++) if(board[i+dx*s]?.[j+dy*s]===p) c++; else break;
+        for(let s=1;s<5;s++) if(board[i-dx*s]?.[j-dy*s]===p) c++; else break;
+        if(c>=5) return true;
+    }
+    return false;
 }
 
 
-sendBtn.onclick = sendMessage;
-userInput.onkeydown = (e) => {
-  if (e.key === 'Enter') sendMessage();
+document.getElementById('resetBtn').onclick = () => {
+    board = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+    isGameOver = false;
+    drawHeatmap();
 };
 
 
-// ====== 初始訊息 ======
-addMessage('AI：你好！我可以陪你下五子棋，也可以聊天 😊', 'ai');
-drawGrid();
-
+drawHeatmap();
 

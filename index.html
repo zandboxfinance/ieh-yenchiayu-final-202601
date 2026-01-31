@@ -1,40 +1,26 @@
-<link rel="stylesheet" href="style.css">
-
-
-
-
-
-
-<div class="main-wrapper">
-
-
-  <!-- ===== 五子棋區 ===== -->
-  <div class="board-area">
-    <h1>♟️ AI 下棋去</h1>
-    <canvas id="chess"></canvas>
-    <div id="status">你的回合（黑子）</div>
-    <button id="restartBtn">再來一次</button>
-  </div>
-
-
-  <!-- ===== 聊天室區 ===== -->
-  <div class="chat-container">
-    <h1>🤖 我的 AI 聊天室</h1>
-    <div id="chatBox" class="chat-box"></div>
-    <div class="input-area">
-      <input id="userInput" placeholder="輸入你的問題…" />
-      <button id="sendBtn">送出</button>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 視覺化五子棋對弈</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>AI 邏輯視覺化對弈系統</h2>
+        <div id="status">你的回合 (黑子)</div>
+        <div class="main-content">
+            <canvas id="chess"></canvas>
+            <div class="ai-info">
+                <h3>AI 思考數據</h3>
+                <p>當前最佳分數: <span id="bestScore">0</span></p>
+                <p>掃描節點數: <span id="nodes">0</span></p>
+                <hr>
+                <small>紅色區塊越深，代表 AI 越想下在那裡</small>
+            </div>
+        </div>
+        <button id="resetBtn">重啟 AI 系統</button>
     </div>
-  </div>
-
-
-</div>
-
-
-<link rel="stylesheet" href="style.css">
-<script src="script.js"></script>
-
-
-
-
-
+    <script src="script.js"></script>
+</body>
+</html>
